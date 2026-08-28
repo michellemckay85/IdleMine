@@ -5,7 +5,7 @@ using GoldAndGoblins.Gameplay;
 
 namespace GoldAndGoblins.UI
 {
-    // One instance per upgrade row prefab; UpgradePanelController spawns/binds these.
+    // One instance per upgrade row; UpgradePanelController spawns/binds these.
     public class UpgradeRowController : MonoBehaviour
     {
         [SerializeField] private TMP_Text nameText;
@@ -15,20 +15,31 @@ namespace GoldAndGoblins.UI
 
         private UpgradeDataSO data;
 
+        public void Wire(TMP_Text name, TMP_Text level, TMP_Text cost, Button buy)
+        {
+            nameText = name;
+            levelText = level;
+            costText = cost;
+            buyButton = buy;
+        }
+
         private void Awake() => UiRowLayoutFix.FixRow(transform);
 
         public void Bind(UpgradeDataSO upgradeData)
         {
             data = upgradeData;
-            buyButton.onClick.RemoveAllListeners();
-            buyButton.onClick.AddListener(OnBuyClicked);
+            if (buyButton != null)
+            {
+                buyButton.onClick.RemoveAllListeners();
+                buyButton.onClick.AddListener(OnBuyClicked);
+            }
             Refresh();
             UiRowLayoutFix.FixRow(transform);
         }
 
         public void Refresh()
         {
-            if (data == null) return;
+            if (data == null || UpgradeSystem.Instance == null) return;
             var level = UpgradeSystem.Instance.GetLevel(data.upgradeId);
             var cost = UpgradeSystem.Instance.GetNextCost(data.upgradeId);
 
@@ -40,6 +51,7 @@ namespace GoldAndGoblins.UI
 
         private void OnBuyClicked()
         {
+            if (data == null || UpgradeSystem.Instance == null) return;
             if (UpgradeSystem.Instance.Purchase(data.upgradeId))
             {
                 Refresh();

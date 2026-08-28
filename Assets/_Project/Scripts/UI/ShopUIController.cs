@@ -9,7 +9,7 @@ namespace GoldAndGoblins.UI
     public class ShopUIController : MonoBehaviour
     {
         [SerializeField] private ProductCatalogSO catalog;
-        [SerializeField] private ShopRowController rowPrefab;
+        [SerializeField] private ShopRowController rowPrefab; // optional legacy
         [SerializeField] private Transform rowContainer;
 
         private readonly List<ShopRowController> spawnedRows = new List<ShopRowController>();
@@ -17,10 +17,12 @@ namespace GoldAndGoblins.UI
         private void OnEnable()
         {
             EventBus.Subscribe<PurchaseCompletedEvent>(OnPurchaseCompleted);
+            if (Application.isPlaying && catalog != null && spawnedRows.Count == 0)
+            {
+                BuildRows();
+            }
         }
 
-        // Start, not OnEnable: rows bind against IAPManager.Instance, which is only
-        // guaranteed to exist by the time every object's Start has run.
         private void Start() => BuildRows();
 
         private void OnDisable()
@@ -30,22 +32,60 @@ namespace GoldAndGoblins.UI
 
         private void BuildRows()
         {
-            if (catalog == null || rowPrefab == null || rowContainer == null) return;
+            if (catalog == null)
+            {
+                Debug.LogWarning("[ShopUI] No ProductCatalog assigned on ShopUIController.");
+                return;
+            }
 
-            foreach (var row in spawnedRows) Destroy(row.gameObject);
+            EnsureRowContainer();
+            if (rowContainer == null)
+            {
+                Debug.LogError("[ShopUI] No rowContainer — open Gold And Goblins → Build UI Layout once.");
+                return;
+            }
+
+            foreach (var row in spawnedRows)
+            {
+                if (row != null) Destroy(row.gameObject);
+            }
             spawnedRows.Clear();
+
+            for (var i = rowContainer.childCount - 1; i >= 0; i--)
+            {
+                Destroy(rowContainer.GetChild(i).gameObject);
+            }
+
+            if (catalog.products == null || catalog.products.Count == 0)
+            {
+                Debug.LogWarning("[ShopUI] Product catalog is empty.");
+                return;
+            }
 
             foreach (var product in catalog.products)
             {
-                var row = Instantiate(rowPrefab, rowContainer);
-                row.Bind(product);
+                if (product == null) continue;
+                var row = UiRuntimeRowFactory.CreateShopRow(rowContainer, product);
                 spawnedRows.Add(row);
             }
 
-            // Rows instantiated at runtime under a Layout Group don't always trigger an
-            // automatic rebuild -- without this they can render stacked on top of each
-            // other instead of stacked vertically.
             if (rowContainer is RectTransform rt) LayoutRebuilder.ForceRebuildLayoutImmediate(rt);
+            Debug.Log($"[ShopUI] Built {spawnedRows.Count} shop rows.");
+        }
+
+        private void EnsureRowContainer()
+        {
+            if (rowContainer != null) return;
+
+            var scroll = GetComponentInChildren<ScrollRect>(true);
+            if (scroll != null && scroll.content != null)
+            {
+                rowContainer = scroll.content;
+                return;
+            }
+
+            var vlg = GetComponentInChildren<VerticalLayoutGroup>(true);
+            if (vlg != null) rowContainer = vlg.transform;
         }
 
         private void OnPurchaseCompleted(PurchaseCompletedEvent evt) => BuildRows();
