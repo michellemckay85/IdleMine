@@ -170,6 +170,8 @@ namespace GoldAndGoblins.EditorTools
             hlg.childAlignment = TextAnchor.MiddleLeft;
             hlg.childForceExpandHeight = true;
             hlg.childForceExpandWidth = false;
+            hlg.childControlWidth = true;
+            hlg.childControlHeight = true;
 
             var nameText = CreateText(row.transform, "NameText", "Upgrade", 34, TextAlignmentOptions.MidlineLeft);
             AddFlexibleWidth(nameText.gameObject, 2f);
@@ -236,6 +238,8 @@ namespace GoldAndGoblins.EditorTools
             hlg.childAlignment = TextAnchor.MiddleLeft;
             hlg.childForceExpandHeight = true;
             hlg.childForceExpandWidth = false;
+            hlg.childControlWidth = true;
+            hlg.childControlHeight = true;
 
             var textColumn = new GameObject("TextColumn", typeof(RectTransform), typeof(VerticalLayoutGroup));
             textColumn.transform.SetParent(row.transform, false);
@@ -572,8 +576,16 @@ namespace GoldAndGoblins.EditorTools
             tmp.fontSize = fontSize;
             tmp.alignment = alignment;
             tmp.color = new Color(0.25f, 0.15f, 0.05f);
+            // Important: do NOT stretch-to-parent here. Inside Horizontal/VerticalLayoutGroup
+            // stretch anchors collapse to ~0 width and TMP wraps one character per line
+            // (the vertical gibberish seen in Upgrades/Shop).
+            tmp.enableWordWrapping = false;
+            tmp.overflowMode = TextOverflowModes.Ellipsis;
             var rt = go.GetComponent<RectTransform>();
-            AnchorStretchAll(rt);
+            rt.anchorMin = new Vector2(0, 0);
+            rt.anchorMax = new Vector2(0, 1);
+            rt.pivot = new Vector2(0, 0.5f);
+            rt.sizeDelta = new Vector2(200, 0);
             return tmp;
         }
 
@@ -589,6 +601,14 @@ namespace GoldAndGoblins.EditorTools
             {
                 var text = CreateText(go.transform, "Label", label, fontSize, TextAlignmentOptions.Midline);
                 text.color = Color.white;
+                // Button labels should fill the button face.
+                var rt = text.rectTransform;
+                rt.anchorMin = Vector2.zero;
+                rt.anchorMax = Vector2.one;
+                rt.offsetMin = Vector2.zero;
+                rt.offsetMax = Vector2.zero;
+                text.enableWordWrapping = false;
+                text.overflowMode = TextOverflowModes.Overflow;
             }
 
             return go.GetComponent<Button>();
@@ -596,8 +616,11 @@ namespace GoldAndGoblins.EditorTools
 
         private static void AddFlexibleWidth(GameObject go, float flex)
         {
-            var layout = go.AddComponent<LayoutElement>();
+            var layout = go.GetComponent<LayoutElement>();
+            if (layout == null) layout = go.AddComponent<LayoutElement>();
             layout.flexibleWidth = flex;
+            layout.minWidth = 80;
+            if (layout.preferredWidth <= 0) layout.preferredWidth = 160;
         }
 
         // ---------- Anchoring helpers (1080x1920 reference resolution) ----------

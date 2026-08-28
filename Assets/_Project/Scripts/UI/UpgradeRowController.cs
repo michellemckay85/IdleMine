@@ -15,12 +15,15 @@ namespace GoldAndGoblins.UI
 
         private UpgradeDataSO data;
 
+        private void Awake() => UiRowLayoutFix.FixRow(transform);
+
         public void Bind(UpgradeDataSO upgradeData)
         {
             data = upgradeData;
             buyButton.onClick.RemoveAllListeners();
             buyButton.onClick.AddListener(OnBuyClicked);
             Refresh();
+            UiRowLayoutFix.FixRow(transform);
         }
 
         public void Refresh()
