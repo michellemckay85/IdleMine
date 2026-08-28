@@ -80,7 +80,9 @@ namespace GoldAndGoblins.EditorTools
                 {
                     materialName = "Mat_Goblin",
                     texturePath = null, // no skeleton texture in the repo yet -- see class comment
-                    prefabNames = new[] { "goblin_skeleton" }
+                    // "goblin" is the block-form visual sitting in the mine grid until fought;
+                    // "goblin_skeleton" is the same mesh used during the combat encounter itself.
+                    prefabNames = new[] { "goblin", "goblin_skeleton" }
                 },
             };
 
