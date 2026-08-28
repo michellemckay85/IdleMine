@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Purchasing;
+using UnityEngine.Purchasing.Extension;
 using GoldAndGoblins.Core;
 
 namespace GoldAndGoblins.Economy
