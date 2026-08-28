@@ -55,8 +55,27 @@ namespace GoldAndGoblins.EditorTools
                       "automatically from whatever data exists.");
         }
 
-        private static Sprite LoadSprite(string fileName) =>
-            AssetDatabase.LoadAssetAtPath<Sprite>($"{UIArtPath}/{fileName}");
+        private static Sprite LoadSprite(string fileName)
+        {
+            var path = $"{UIArtPath}/{fileName}";
+            var sprite = AssetDatabase.LoadAssetAtPath<Sprite>(path);
+            if (sprite != null) return sprite;
+
+            // These UI PNGs were imported as plain Default textures, not Sprites, so there's
+            // no Sprite sub-asset to load yet -- reimport as a Sprite and try again.
+            var importer = AssetImporter.GetAtPath(path) as TextureImporter;
+            if (importer == null)
+            {
+                Debug.LogWarning($"[UILayoutSetup] No texture importer found for {path}.");
+                return null;
+            }
+
+            importer.textureType = TextureImporterType.Sprite;
+            importer.spriteImportMode = SpriteImportMode.Single;
+            importer.SaveAndReimport();
+
+            return AssetDatabase.LoadAssetAtPath<Sprite>(path);
+        }
 
         // ---------- HUD ----------
 
