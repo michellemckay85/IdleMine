@@ -18,9 +18,14 @@ namespace GoldAndGoblins.Core
         [SerializeField] private DailyRewardManager dailyRewardManager;
         [SerializeField] private PrestigeManager prestigeManager;
 
+        public const string BootVersion = "2026-08-28-r11";
+
         protected override void Awake()
         {
             base.Awake();
+
+            // Loud banner so we can tell if this Mac is actually running GitHub main.
+            Debug.LogError("[GoldAndGoblins] BOOT " + BootVersion + " — if you do not see this exact line, Unity is not using the latest pulled code.");
 
             // SaveManager, CurrencyManager, IAPManager, AdsManager and AnalyticsManager
             // are independent singletons and initialize themselves in their own Awake.
