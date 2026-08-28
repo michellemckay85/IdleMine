@@ -25,9 +25,9 @@ namespace GoldAndGoblins.Gameplay
 
             if (earned > 0)
             {
-                CurrencyManager.Instance.AddGold(earned);
+                var applied = CurrencyManager.Instance.AddGold(earned);
                 pendingOfflineSeconds = cappedSeconds;
-                EventBus.Publish(new WelcomeBackEvent(cappedSeconds, earned));
+                EventBus.Publish(new WelcomeBackEvent(cappedSeconds, applied));
             }
         }
 
