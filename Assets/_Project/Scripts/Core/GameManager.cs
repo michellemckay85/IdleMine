@@ -34,7 +34,16 @@ namespace GoldAndGoblins.Core
             var vipActive = SaveManager.Instance != null && SaveManager.Instance.Current.vipActive;
             CurrencyManager.Instance?.RefreshPersistentMultipliers(prestigeMult, vipActive);
 
-            mineGrid?.Initialize();
+            if (mineGrid == null) mineGrid = MineGrid.Instance;
+            if (mineGrid == null)
+            {
+                Debug.LogError("[GameManager] MineGrid is missing from the scene — the mine cannot build. Select the Managers object and assign MineGrid on GameManager.");
+            }
+            else
+            {
+                mineGrid.Initialize();
+            }
+
             idleEarningsManager?.ApplyOfflineEarnings();
             eventManager?.RefreshActiveEvents();
             dailyRewardManager?.CheckAndOfferDailyReward();
