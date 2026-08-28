@@ -43,17 +43,32 @@ namespace GoldAndGoblins.EditorTools
 
             Directory.CreateDirectory(MaterialOutputPath);
 
+            // Delete the incorrectly-textured material from a previous run of this tool,
+            // if present, rather than leaving it as orphaned clutter under Art/Materials.
+            const string obsoleteMaterialPath = MaterialOutputPath + "/Mat_Dungeon.mat";
+            if (AssetDatabase.LoadAssetAtPath<Material>(obsoleteMaterialPath) != null)
+            {
+                AssetDatabase.DeleteAsset(obsoleteMaterialPath);
+            }
+
             var specs = new[]
             {
+                // block_bits_texture.png and dungeon_texture.png are two different KayKit
+                // palette sheets that happen to share most swatch colors -- but not all.
+                // dirt.fbx's UVs land on a swatch that's hot magenta in dungeon_texture.png
+                // and a normal orange/brown in block_bits_texture.png, which is the one
+                // actually meant for these meshes (the Environment pieces use the other).
                 new MaterialSpec
                 {
-                    materialName = "Mat_Dungeon",
-                    texturePath = "Assets/_Project/Art/Blocks/dungeon_texture.png",
-                    prefabNames = new[]
-                    {
-                        "dirt", "stone", "ore_common", "ore_rare", "key", "chest",
-                        "env_wall_doorway", "env_floor_dirt", "env_torch_lit"
-                    }
+                    materialName = "Mat_Blocks",
+                    texturePath = "Assets/_Project/Art/Blocks/block_bits_texture.png",
+                    prefabNames = new[] { "dirt", "stone", "ore_common", "ore_rare", "key", "chest" }
+                },
+                new MaterialSpec
+                {
+                    materialName = "Mat_Environment",
+                    texturePath = "Assets/_Project/Art/Environment/dungeon_texture.png",
+                    prefabNames = new[] { "env_wall_doorway", "env_floor_dirt", "env_torch_lit" }
                 },
                 new MaterialSpec
                 {
