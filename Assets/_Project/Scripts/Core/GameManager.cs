@@ -7,7 +7,7 @@ namespace GoldAndGoblins.Core
 {
     // Boots managers in dependency order. Attach this to a single "Managers" root
     // in the bootstrap scene alongside SaveManager, CurrencyManager, etc.
-    [DefaultExecutionOrder(-1000)]
+    [DefaultExecutionOrder(1000)]
     public class GameManager : GoldAndGoblins.Utils.Singleton<GameManager>
     {
         [SerializeField] private MineGrid mineGrid;
