@@ -172,6 +172,8 @@ namespace GoldAndGoblins.EditorTools
             hlg.childForceExpandWidth = false;
             hlg.childControlWidth = true;
             hlg.childControlHeight = true;
+
+            var nameText = CreateText(row.transform, "NameText", "Upgrade", 34, TextAlignmentOptions.MidlineLeft);
             AddFlexibleWidth(nameText.gameObject, 2f);
 
             var levelText = CreateText(row.transform, "LevelText", "Lv. 0", 30, TextAlignmentOptions.Midline);
