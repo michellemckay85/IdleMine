@@ -89,7 +89,7 @@ namespace GoldAndGoblins.EditorTools
                 new ProductSpec("gems_medium", "Bag of Gems", "300 gems (+10% bonus)", ProductType.Consumable, RewardKind.Gems, gemAmount: 330),
                 new ProductSpec("gems_large", "Chest of Gems", "1000 gems (+25% bonus)", ProductType.Consumable, RewardKind.Gems, gemAmount: 1250),
                 new ProductSpec("remove_ads", "Remove Ads", "No more interstitial ads, forever.", ProductType.NonConsumable, RewardKind.RemoveAds),
-                new ProductSpec("vip_pass", "VIP Pass", "Permanent VIP perks.", ProductType.NonConsumable, RewardKind.VipPass),
+                new ProductSpec("vip_pass", "VIP Pass", "Permanent 2x gold and no interstitial ads.", ProductType.NonConsumable, RewardKind.VipPass),
                 new ProductSpec("starter_bundle", "Starter Bundle", "200 gems + 5,000 gold. One-time offer.", ProductType.Consumable, RewardKind.StarterBundle, gemAmount: 200, goldAmount: 5000),
             };
 

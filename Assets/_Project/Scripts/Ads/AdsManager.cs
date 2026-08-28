@@ -22,7 +22,8 @@ namespace GoldAndGoblins.Ads
             provider.Initialize();
         }
 
-        public bool RemoveAdsPurchased => SaveManager.Instance.Current.removeAdsPurchased;
+        public bool RemoveAdsPurchased =>
+            SaveManager.Instance.Current.removeAdsPurchased || SaveManager.Instance.Current.vipActive;
 
         public void ShowRewardedAd(string placementId, Action onRewardGranted, Action onFailedOrSkipped = null)
         {
@@ -38,6 +39,8 @@ namespace GoldAndGoblins.Ads
 
         public void ShowInterstitialIfAllowed(string placementId)
         {
+            // Remove Ads purchase and VIP both suppress forced interstitials.
+            // Rewarded ads (opt-in) still work either way.
             if (RemoveAdsPurchased) return;
             if (provider.IsInterstitialReady())
             {
