@@ -61,7 +61,7 @@ namespace GoldAndGoblins.Goblins
             long gems = 0;
             if (Random.value < currentGoblin.gemDropChance)
             {
-                gems = Random.Range(currentGoblin.gemLootMin, currentGoblin.gemLootMax + 1);
+                gems = Random.Range((int)currentGoblin.gemLootMin, (int)currentGoblin.gemLootMax + 1);
                 CurrencyManager.Instance.AddGems(gems);
             }
 
