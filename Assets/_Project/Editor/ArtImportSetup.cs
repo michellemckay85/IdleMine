@@ -6,16 +6,18 @@ using GoldAndGoblins.Goblins;
 
 namespace GoldAndGoblins.EditorTools
 {
-    // Turns the KayKit meshes dropped in Assets/_Project/Art/{Blocks,Goblins} into
-    // visual-only prefabs (mesh + renderer, no collider -- Block already provides one)
-    // and assigns them to BlockDataSO / GoblinDataSO assets. Still manual afterward:
-    // build a base Block prefab (Block component + Collider) and drop these
-    // BlockDataSO/GoblinDataSO assets into MineGrid.blockPalette and
-    // GoblinCombatManager.goblinPalette in the Inspector.
+    // Turns the imported meshes under Assets/_Project/Art/{Blocks,Goblins,Environment,Characters}
+    // into visual-only prefabs (mesh + renderer, no collider -- Block already provides one) under
+    // Art/Prefabs, and assigns the block/goblin ones to BlockDataSO / GoblinDataSO assets. Still
+    // manual afterward: build a base Block prefab (Block component + Collider), wire the
+    // palettes on MineGrid/GoblinCombatManager, hand-place the environment prefabs, and assign
+    // the Art/UI sprites to the HUD/shop/popup Image components -- see the log message below.
     public static class ArtImportSetup
     {
         private const string BlocksArtPath = "Assets/_Project/Art/Blocks";
         private const string GoblinsArtPath = "Assets/_Project/Art/Goblins";
+        private const string EnvironmentArtPath = "Assets/_Project/Art/Environment";
+        private const string CharactersArtPath = "Assets/_Project/Art/Characters";
         private const string VisualPrefabPath = "Assets/_Project/Art/Prefabs";
         private const string BlockDataPath = "Assets/_Project/ScriptableObjects/Blocks";
         private const string GoblinDataPath = "Assets/_Project/ScriptableObjects/Goblins";
@@ -78,11 +80,20 @@ namespace GoldAndGoblins.EditorTools
             goblinSo.gemLootMax = 5;
             EditorUtility.SetDirty(goblinSo);
 
+            // Environment dressing and the miner character have no data-driven slot in code --
+            // just stage them as prefabs so they're ready to hand-place in the scene.
+            BuildVisualPrefab($"{EnvironmentArtPath}/wall_doorway.fbx", "env_wall_doorway");
+            BuildVisualPrefab($"{EnvironmentArtPath}/floor_dirt_large_rocky.fbx", "env_floor_dirt");
+            BuildVisualPrefab($"{EnvironmentArtPath}/torch_lit.fbx", "env_torch_lit");
+            BuildVisualPrefab($"{CharactersArtPath}/Barbarian.fbx", "character_miner");
+
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
-            Debug.Log("[ArtImportSetup] Built visual prefabs under Art/Prefabs and BlockDataSO/GoblinDataSO assets under ScriptableObjects/. " +
-                      "Still needed: a base Block prefab (Block component + Collider) assigned to MineGrid.blockPrefab, and these BlockDataSO " +
-                      "assets dropped into MineGrid.blockPalette / GoblinCombatManager.goblinPalette in the Inspector.");
+            Debug.Log("[ArtImportSetup] Built visual prefabs under Art/Prefabs (blocks, goblin, environment dressing, miner character) " +
+                      "and BlockDataSO/GoblinDataSO assets under ScriptableObjects/. Still needed: a base Block prefab (Block component + " +
+                      "Collider) assigned to MineGrid.blockPrefab, these BlockDataSO assets dropped into MineGrid.blockPalette / " +
+                      "GoblinCombatManager.goblinPalette, environment prefabs hand-placed around the grid, and UI sprites from Art/UI " +
+                      "assigned to the HUD/shop/popup/health-bar Image components in the Inspector.");
         }
 
         private static GameObject BuildVisualPrefab(string meshAssetPath, string id)
