@@ -55,7 +55,10 @@ namespace GoldAndGoblins.Gameplay
                 {
                     var data = PickBlockDataFor(r, c);
                     var instance = Instantiate(blockPrefab, gridRoot);
-                    instance.transform.localPosition = new Vector3(c * cellSpacing, -r * cellSpacing, 0);
+                    // Center the shaft on (0,0) so a portrait camera aimed at the origin frames it.
+                    var x = (c - (cols - 1) * 0.5f) * cellSpacing;
+                    var y = -(r - (rows - 1) * 0.5f) * cellSpacing;
+                    instance.transform.localPosition = new Vector3(x, y, 0);
                     instance.Setup(data, r, c, CurrentDepth);
                     instance.IsLocked = data.kind == BlockKind.ChestBlock;
                     grid[r, c] = instance;
