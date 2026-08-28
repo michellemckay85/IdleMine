@@ -41,6 +41,7 @@ namespace GoldAndGoblins.Core
             }
             else
             {
+                Debug.Log("[GameManager] Initializing MineGrid...");
                 mineGrid.Initialize();
             }
 
