@@ -6,8 +6,10 @@ using UnityEngine.UI;
 using UnityEngine.Events;
 using UnityEditor.Events;
 using TMPro;
+using GoldAndGoblins.Core;
 using GoldAndGoblins.UI;
 using GoldAndGoblins.LiveOps;
+using GoldAndGoblins.Social;
 
 namespace GoldAndGoblins.EditorTools
 {
@@ -37,10 +39,13 @@ namespace GoldAndGoblins.EditorTools
             var barFillSprite = LoadSprite("progress_red.png");
             var barBorderSprite = LoadSprite("progress_red_border.png");
 
+            EnsureLeaderboardManagerExists();
+
             BuildHUD(canvas);
             var upgradePanel = BuildUpgradePanel(canvas, panelSprite, closeButtonSprite, buttonSprite);
             var shopPanel = BuildShopPanel(canvas, panelSprite, closeButtonSprite, buttonSprite);
-            BuildNavBar(canvas, panelSprite, buttonSprite, upgradePanel, shopPanel);
+            var leaderboardPanel = BuildLeaderboardPanel(canvas, panelSprite, closeButtonSprite, buttonSprite);
+            BuildNavBar(canvas, panelSprite, buttonSprite, upgradePanel, shopPanel, leaderboardPanel);
             BuildEventBanner(canvas, bannerSprite);
             BuildWelcomeBackPopup(canvas, panelSprite, buttonSprite);
             BuildDailyRewardPopup(canvas, panelSprite, buttonSprite);
@@ -49,10 +54,28 @@ namespace GoldAndGoblins.EditorTools
             EditorSceneManager.MarkSceneDirty(canvas.gameObject.scene);
             EditorSceneManager.SaveScene(canvas.gameObject.scene);
             AssetDatabase.SaveAssets();
-            Debug.Log("[UILayoutSetup] Built HUD, Upgrade/Shop panels + row prefabs, nav bar, event banner, " +
-                      "welcome-back/daily-reward popups, and goblin health bar. Upgrade/Shop panels will be empty " +
-                      "until you create UpgradeDataSO / IAPProductSO+ProductCatalogSO assets -- the rows populate " +
-                      "automatically from whatever data exists.");
+            Debug.Log("[UILayoutSetup] Built HUD, Upgrade/Shop/Leaderboard panels + row prefabs, nav bar, event " +
+                      "banner, welcome-back/daily-reward popups, and goblin health bar. Upgrade/Shop panels will be " +
+                      "empty until you create UpgradeDataSO / IAPProductSO+ProductCatalogSO assets. The leaderboard " +
+                      "will show 'unavailable' until Unity Gaming Services is linked (Edit > Project Settings > " +
+                      "Services) and a 'total_gold_earned' leaderboard exists in the Unity Cloud Dashboard.");
+        }
+
+        // LeaderboardManager is only added to fresh scenes by ProjectBootstrapper -- an
+        // already-existing saved scene (like this project's Main.unity) never picks up
+        // additions to that tool retroactively, so add it here if it's missing.
+        private static void EnsureLeaderboardManagerExists()
+        {
+            if (Object.FindObjectOfType<LeaderboardManager>(true) != null) return;
+
+            var managersRoot = Object.FindObjectOfType<GameManager>(true);
+            if (managersRoot == null)
+            {
+                Debug.LogWarning("[UILayoutSetup] No GameManager found -- can't attach LeaderboardManager. Run 'Bootstrap Starter Scene' first.");
+                return;
+            }
+
+            managersRoot.gameObject.AddComponent<LeaderboardManager>();
         }
 
         private static Sprite LoadSprite(string fileName)
@@ -245,9 +268,73 @@ namespace GoldAndGoblins.EditorTools
             return prefab;
         }
 
+        // ---------- Leaderboard panel ----------
+
+        private static GameObject BuildLeaderboardPanel(Canvas canvas, Sprite panelSprite, Sprite closeSprite, Sprite buttonSprite)
+        {
+            var existing = Object.FindObjectOfType<LeaderboardPanelController>(true);
+            var panelGo = existing != null ? existing.gameObject : CreateUIChild(canvas.transform, "LeaderboardPanel");
+            ClearChildren(panelGo.transform);
+            var controller = existing != null ? existing : panelGo.AddComponent<LeaderboardPanelController>();
+
+            AnchorModal(panelGo.GetComponent<RectTransform>());
+            var bg = CreateImage("Background", panelGo.transform, panelSprite, Color.white);
+            AnchorStretchAll(bg.GetComponent<RectTransform>());
+
+            CreateTitle(panelGo.transform, "Leaderboard");
+            CreateCloseButton(panelGo.transform, closeSprite, panelGo);
+
+            var statusText = CreateText(panelGo.transform, "StatusText", "Loading...", 32, TextAlignmentOptions.Midline);
+            AnchorCenterBox(statusText.rectTransform, 800, 200, 0, -60);
+
+            var rowContainer = BuildScrollingContent(panelGo.transform);
+            var rowPrefab = BuildLeaderboardRowPrefab();
+
+            AssignSerializedField(controller, "rowPrefab", rowPrefab.GetComponent<LeaderboardRowController>());
+            AssignSerializedField(controller, "rowContainer", rowContainer);
+            AssignSerializedField(controller, "statusText", statusText);
+
+            panelGo.SetActive(false);
+            return panelGo;
+        }
+
+        private static GameObject BuildLeaderboardRowPrefab()
+        {
+            var row = new GameObject("LeaderboardRow", typeof(RectTransform), typeof(HorizontalLayoutGroup), typeof(LayoutElement));
+            var layoutElement = row.GetComponent<LayoutElement>();
+            layoutElement.preferredHeight = 110;
+            layoutElement.flexibleWidth = 1;
+
+            var hlg = row.GetComponent<HorizontalLayoutGroup>();
+            hlg.padding = new RectOffset(20, 20, 5, 5);
+            hlg.spacing = 20;
+            hlg.childAlignment = TextAnchor.MiddleLeft;
+            hlg.childForceExpandHeight = true;
+            hlg.childForceExpandWidth = false;
+
+            var rankText = CreateText(row.transform, "RankText", "#0", 30, TextAlignmentOptions.MidlineLeft);
+            AddFlexibleWidth(rankText.gameObject, 0.6f);
+
+            var nameText = CreateText(row.transform, "NameText", "Player", 30, TextAlignmentOptions.MidlineLeft);
+            AddFlexibleWidth(nameText.gameObject, 2f);
+
+            var scoreText = CreateText(row.transform, "ScoreText", "0", 30, TextAlignmentOptions.MidlineRight);
+            AddFlexibleWidth(scoreText.gameObject, 1f);
+
+            var controller = row.AddComponent<LeaderboardRowController>();
+            AssignSerializedField(controller, "rankText", rankText);
+            AssignSerializedField(controller, "nameText", nameText);
+            AssignSerializedField(controller, "scoreText", scoreText);
+
+            Directory.CreateDirectory(RowPrefabPath);
+            var prefab = PrefabUtility.SaveAsPrefabAsset(row, $"{RowPrefabPath}/LeaderboardRow.prefab");
+            Object.DestroyImmediate(row);
+            return prefab;
+        }
+
         // ---------- Nav bar ----------
 
-        private static void BuildNavBar(Canvas canvas, Sprite panelSprite, Sprite buttonSprite, GameObject upgradePanel, GameObject shopPanel)
+        private static void BuildNavBar(Canvas canvas, Sprite panelSprite, Sprite buttonSprite, GameObject upgradePanel, GameObject shopPanel, GameObject leaderboardPanel)
         {
             var existingNav = Object.FindObjectOfType<NavBarController>(true);
             var navGo = existingNav != null ? existingNav.gameObject : CreateUIChild(canvas.transform, "NavBar");
@@ -258,17 +345,22 @@ namespace GoldAndGoblins.EditorTools
             var bg = CreateImage("Background", navGo.transform, panelSprite, new Color(1, 1, 1, 0.9f));
             AnchorStretchAll(bg.GetComponent<RectTransform>());
 
-            var upgradesButton = CreateButton(navGo.transform, "UpgradesButton", buttonSprite, "Upgrades", 32);
-            AnchorLeft(upgradesButton.GetComponent<RectTransform>(), 30, 460, 140);
+            var upgradesButton = CreateButton(navGo.transform, "UpgradesButton", buttonSprite, "Upgrades", 28);
+            AnchorHorizontalSlot(upgradesButton.GetComponent<RectTransform>(), 1f / 6f, 320, 140);
 
-            var shopButton = CreateButton(navGo.transform, "ShopButton", buttonSprite, "Shop", 32);
-            AnchorRight(shopButton.GetComponent<RectTransform>(), 30, 460, 140);
+            var shopButton = CreateButton(navGo.transform, "ShopButton", buttonSprite, "Shop", 28);
+            AnchorHorizontalSlot(shopButton.GetComponent<RectTransform>(), 0.5f, 320, 140);
+
+            var leaderboardButton = CreateButton(navGo.transform, "LeaderboardButton", buttonSprite, "Ranks", 28);
+            AnchorHorizontalSlot(leaderboardButton.GetComponent<RectTransform>(), 5f / 6f, 320, 140);
 
             AssignSerializedField(nav, "upgradePanel", upgradePanel);
             AssignSerializedField(nav, "shopPanel", shopPanel);
+            AssignSerializedField(nav, "leaderboardPanel", leaderboardPanel);
 
             UnityEventTools.AddPersistentListener(upgradesButton.onClick, nav.ShowUpgrades);
             UnityEventTools.AddPersistentListener(shopButton.onClick, nav.ShowShop);
+            UnityEventTools.AddPersistentListener(leaderboardButton.onClick, nav.ShowLeaderboard);
         }
 
         // ---------- Event banner ----------
@@ -552,6 +644,15 @@ namespace GoldAndGoblins.EditorTools
             rt.pivot = new Vector2(1, 0.5f);
             rt.sizeDelta = new Vector2(width, height);
             rt.anchoredPosition = new Vector2(-x, 0);
+        }
+
+        private static void AnchorHorizontalSlot(RectTransform rt, float xFraction, float width, float height)
+        {
+            rt.anchorMin = new Vector2(xFraction, 0.5f);
+            rt.anchorMax = new Vector2(xFraction, 0.5f);
+            rt.pivot = new Vector2(0.5f, 0.5f);
+            rt.sizeDelta = new Vector2(width, height);
+            rt.anchoredPosition = Vector2.zero;
         }
 
         private static void AnchorTopRightBox(RectTransform rt, float width, float height, float x, float y)
