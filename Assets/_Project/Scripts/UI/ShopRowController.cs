@@ -25,6 +25,9 @@ namespace GoldAndGoblins.UI
 
             buyButton.onClick.RemoveAllListeners();
             buyButton.onClick.AddListener(() => IAPManager.Instance.BuyProduct(product.productId));
+            UiRowLayoutFix.FixRow(transform);
         }
+
+        private void Awake() => UiRowLayoutFix.FixRow(transform);
     }
 }
