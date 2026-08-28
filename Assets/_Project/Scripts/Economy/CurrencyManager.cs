@@ -18,6 +18,7 @@ namespace GoldAndGoblins.Economy
             var data = SaveManager.Instance.Current;
             data.gold += applied;
             data.lifetimeGoldEarned += applied;
+            data.totalGoldEverEarned += applied;
             EventBus.Publish(new GoldChangedEvent(data.gold, applied));
         }
 

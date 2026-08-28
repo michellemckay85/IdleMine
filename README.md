@@ -99,10 +99,44 @@ the gameplay code is render-pipeline-specific.
   earned enough lifetime gold, for a permanent multiplier — the standard
   idle-game retention loop.
 
-None of this talks to a backend — it's all local/client-side, which is normal
-for this genre but means **IAP receipts are trusted, not server-validated**
-(see `IReceiptValidator` — replace `TrustClientReceiptValidator` before launch
-if you want real fraud protection).
+IAP, ads, and events are all local/client-side, which is normal for this
+genre but means **IAP receipts are trusted, not server-validated** (see
+`IReceiptValidator` — replace `TrustClientReceiptValidator` before launch if
+you want real fraud protection). The leaderboard (below) is the first
+feature that actually talks to a backend.
+
+## Social / backend features (Unity Gaming Services)
+
+Chosen backend for cross-player features (leaderboards, and eventually
+league/alliance/trade/chat) is **Unity Gaming Services (UGS)**. Only the
+leaderboard is built so far — the rest are large, separate features to be
+added one at a time.
+
+- **Leaderboard** (`Social/LeaderboardManager.cs`): ranks players by
+  `SaveData.totalGoldEverEarned` — a cumulative stat that, unlike
+  `lifetimeGoldEarned`, never resets on prestige. Anonymous sign-in via
+  `AuthenticationService`, scores submitted/fetched via
+  `LeaderboardsService`. UI: `LeaderboardPanelController` +
+  `LeaderboardRowController`, opened from the nav bar's "Ranks" button.
+
+**Required one-time setup this code can't do for you** (needs your Unity
+account):
+1. In Unity: **Edit → Project Settings → Services** — sign in and link (or
+   create) a Unity Gaming Services project.
+2. In the [Unity Cloud Dashboard](https://cloud.unity.com) for that project,
+   open **Leaderboards** and create one with the exact ID
+   `total_gold_earned`, sort order **Descending**, score format **Long**.
+
+Until that's done, the leaderboard panel will show "unavailable" rather than
+erroring — it fails soft.
+
+**Not yet built**: league, alliance/guild, trade, and global+alliance chat
+with translation. All four need real backend design (shared persistent
+state, server-authoritative trade to prevent duplication exploits, chat
+infrastructure, a paid translation API) — much larger scope than anything
+else in this repo. Build one at a time against UGS services as they're
+tackled (Cloud Save for persistent group state, Lobby/Relay or a
+third-party chat SDK for messaging).
 
 ## What you still need to do
 

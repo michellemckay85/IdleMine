@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 using GoldAndGoblins.Core;
 using GoldAndGoblins.Economy;
 
@@ -40,6 +41,11 @@ namespace GoldAndGoblins.UI
                 row.Bind(product);
                 spawnedRows.Add(row);
             }
+
+            // Rows instantiated at runtime under a Layout Group don't always trigger an
+            // automatic rebuild -- without this they can render stacked on top of each
+            // other instead of stacked vertically.
+            if (rowContainer is RectTransform rt) LayoutRebuilder.ForceRebuildLayoutImmediate(rt);
         }
 
         private void OnPurchaseCompleted(PurchaseCompletedEvent evt) => BuildRows();

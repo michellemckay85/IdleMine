@@ -10,6 +10,7 @@ using GoldAndGoblins.Goblins;
 using GoldAndGoblins.LiveOps;
 using GoldAndGoblins.Ads;
 using GoldAndGoblins.Analytics;
+using GoldAndGoblins.Social;
 using GoldAndGoblins.UI;
 
 namespace GoldAndGoblins.EditorTools
@@ -80,6 +81,7 @@ namespace GoldAndGoblins.EditorTools
             AssignSerializedField(adsManager, "providerBehaviour", mockProvider);
 
             root.AddComponent<AnalyticsManager>();
+            root.AddComponent<LeaderboardManager>();
 
             var gameManager = root.AddComponent<GameManager>();
             AssignSerializedField(gameManager, "mineGrid", mineGrid);

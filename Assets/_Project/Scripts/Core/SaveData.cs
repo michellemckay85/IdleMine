@@ -14,7 +14,8 @@ namespace GoldAndGoblins.Core
 
         public int currentDepth = 1;
         public int prestigeLevel;
-        public double lifetimeGoldEarned;
+        public double lifetimeGoldEarned; // resets on prestige, used to compute prestige gain
+        public double totalGoldEverEarned; // never resets, used for the leaderboard score
 
         public List<UpgradeLevelEntry> upgradeLevels = new List<UpgradeLevelEntry>();
 

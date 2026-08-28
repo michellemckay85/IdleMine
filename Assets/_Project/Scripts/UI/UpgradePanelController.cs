@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.UI;
 using GoldAndGoblins.Core;
 using GoldAndGoblins.Gameplay;
 
@@ -38,6 +39,11 @@ namespace GoldAndGoblins.UI
                 row.Bind(upgrade);
                 spawnedRows.Add(row);
             }
+
+            // Rows instantiated at runtime under a Layout Group don't always trigger an
+            // automatic rebuild -- without this they can render stacked on top of each
+            // other instead of stacked vertically.
+            if (rowContainer is RectTransform rt) LayoutRebuilder.ForceRebuildLayoutImmediate(rt);
         }
 
         private void OnGoldChanged(GoldChangedEvent evt)
