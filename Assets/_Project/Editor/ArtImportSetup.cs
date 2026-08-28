@@ -1,5 +1,7 @@
 using System.IO;
+using System.Linq;
 using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEngine;
 using GoldAndGoblins.Gameplay;
 using GoldAndGoblins.Goblins;
@@ -94,6 +96,76 @@ namespace GoldAndGoblins.EditorTools
                       "Collider) assigned to MineGrid.blockPrefab, these BlockDataSO assets dropped into MineGrid.blockPalette / " +
                       "GoblinCombatManager.goblinPalette, environment prefabs hand-placed around the grid, and UI sprites from Art/UI " +
                       "assigned to the HUD/shop/popup/health-bar Image components in the Inspector.");
+        }
+
+        // Run after Bootstrap Starter Scene + Wire Up Imported Art: builds the shared Block
+        // prefab (Block component + BoxCollider for tap raycasts) and fills MineGrid.blockPrefab /
+        // blockPalette and GoblinCombatManager.goblinPalette from the generated ScriptableObjects,
+        // in the currently open scene.
+        [MenuItem("Gold And Goblins/Wire Up Scene (Block Prefab + Palettes)")]
+        public static void WireUpScene()
+        {
+            const string prefabDir = "Assets/_Project/Prefabs";
+            const string blockPrefabPath = prefabDir + "/Block.prefab";
+            Directory.CreateDirectory(prefabDir);
+
+            var blockGo = new GameObject("Block", typeof(BoxCollider), typeof(Block));
+            var blockPrefabAsset = PrefabUtility.SaveAsPrefabAsset(blockGo, blockPrefabPath);
+            Object.DestroyImmediate(blockGo);
+
+            var mineGrid = Object.FindObjectOfType<MineGrid>();
+            if (mineGrid == null)
+            {
+                Debug.LogWarning("[ArtImportSetup] No MineGrid found in the open scene -- run 'Bootstrap Starter Scene' first.");
+                return;
+            }
+
+            var blockDataAssets = AssetDatabase.FindAssets("t:BlockDataSO", new[] { BlockDataPath })
+                .Select(guid => AssetDatabase.LoadAssetAtPath<BlockDataSO>(AssetDatabase.GUIDToAssetPath(guid)))
+                .Where(b => b != null)
+                .OrderBy(b => b.blockId)
+                .Cast<Object>()
+                .ToList();
+
+            var mineGridSo = new SerializedObject(mineGrid);
+            mineGridSo.FindProperty("blockPrefab").objectReferenceValue = blockPrefabAsset.GetComponent<Block>();
+            AssignObjectList(mineGridSo.FindProperty("blockPalette"), blockDataAssets);
+            mineGridSo.ApplyModifiedPropertiesWithoutUndo();
+
+            var goblinCombat = Object.FindObjectOfType<GoblinCombatManager>();
+            if (goblinCombat != null)
+            {
+                var goblinDataAssets = AssetDatabase.FindAssets("t:GoblinDataSO", new[] { GoblinDataPath })
+                    .Select(guid => AssetDatabase.LoadAssetAtPath<GoblinDataSO>(AssetDatabase.GUIDToAssetPath(guid)))
+                    .Where(g => g != null)
+                    .Cast<Object>()
+                    .ToList();
+
+                var goblinCombatSo = new SerializedObject(goblinCombat);
+                AssignObjectList(goblinCombatSo.FindProperty("goblinPalette"), goblinDataAssets);
+                goblinCombatSo.ApplyModifiedPropertiesWithoutUndo();
+            }
+            else
+            {
+                Debug.LogWarning("[ArtImportSetup] No GoblinCombatManager found in the open scene -- goblinPalette left unassigned.");
+            }
+
+            EditorSceneManager.MarkSceneDirty(mineGrid.gameObject.scene);
+            EditorSceneManager.SaveScene(mineGrid.gameObject.scene);
+
+            Debug.Log("[ArtImportSetup] Block prefab created at " + blockPrefabPath + " and assigned to MineGrid.blockPrefab; " +
+                      "blockPalette and goblinPalette filled from the generated ScriptableObjects. Scene saved. Still manual: hand-place " +
+                      "the Environment/Characters prefabs around the grid, assign Art/UI sprites to the HUD/shop/popup/health-bar Image " +
+                      "components, and swap materials to the GritLine Toon Shader once imported.");
+        }
+
+        private static void AssignObjectList(SerializedProperty listProperty, System.Collections.Generic.List<Object> items)
+        {
+            listProperty.arraySize = items.Count;
+            for (var i = 0; i < items.Count; i++)
+            {
+                listProperty.GetArrayElementAtIndex(i).objectReferenceValue = items[i];
+            }
         }
 
         private static GameObject BuildVisualPrefab(string meshAssetPath, string id)
