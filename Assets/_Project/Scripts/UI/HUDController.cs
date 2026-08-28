@@ -17,8 +17,12 @@ namespace GoldAndGoblins.UI
             EventBus.Subscribe<GoldChangedEvent>(OnGoldChanged);
             EventBus.Subscribe<GemsChangedEvent>(OnGemsChanged);
             EventBus.Subscribe<DepthAdvancedEvent>(OnDepthAdvanced);
-            RefreshAll();
         }
+
+        // Start (not OnEnable) because it's the only lifecycle method Unity
+        // guarantees runs after every other object's Awake -- the manager
+        // singletons this reads are only guaranteed to exist by then.
+        private void Start() => RefreshAll();
 
         private void OnDisable()
         {
@@ -29,7 +33,7 @@ namespace GoldAndGoblins.UI
 
         private void RefreshAll()
         {
-            if (SaveManager.Instance == null) return;
+            if (SaveManager.Instance == null || CurrencyManager.Instance == null || MineGrid.Instance == null) return;
             SetGoldText(CurrencyManager.Instance.Gold);
             SetGemsText(CurrencyManager.Instance.Gems);
             SetDepthText(MineGrid.Instance.CurrentDepth);

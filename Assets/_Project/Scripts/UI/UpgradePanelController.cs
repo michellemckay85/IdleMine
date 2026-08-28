@@ -13,9 +13,12 @@ namespace GoldAndGoblins.UI
 
         private void OnEnable()
         {
-            BuildRows();
             EventBus.Subscribe<GoldChangedEvent>(OnGoldChanged);
         }
+
+        // Start, not OnEnable: UpgradeSystem.Instance is only guaranteed to exist
+        // by the time every object's Start has run (see HUDController for why).
+        private void Start() => BuildRows();
 
         private void OnDisable()
         {
