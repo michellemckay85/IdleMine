@@ -74,6 +74,9 @@ namespace GoldAndGoblins.EditorTools
             var dailyReward = root.AddComponent<DailyRewardManager>();
             root.AddComponent<IAPManager>();
 
+            var feedback = root.AddComponent<FeedbackManager>();
+            AssignSerializedField(feedback, "worldCamera", Camera.main);
+
             var adsGo = new GameObject("AdsManager");
             adsGo.transform.SetParent(root.transform);
             var mockProvider = adsGo.AddComponent<MockAdsProvider>();
@@ -120,6 +123,9 @@ namespace GoldAndGoblins.EditorTools
 
             var goblinBarGo = CreateUIChild(canvasGo.transform, "GoblinHealthBar");
             goblinBarGo.AddComponent<GoblinHealthBarController>();
+
+            var prestigeGo = CreateUIChild(canvasGo.transform, "PrestigePanel");
+            prestigeGo.AddComponent<PrestigePanelController>();
 
             Debug.Log("[ProjectBootstrapper] Placeholder UI created -- build real layouts on these GameObjects and assign their serialized fields in the Inspector.");
         }

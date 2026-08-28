@@ -40,12 +40,14 @@ namespace GoldAndGoblins.EditorTools
             var barBorderSprite = LoadSprite("progress_red_border.png");
 
             EnsureLeaderboardManagerExists();
+            EnsureFeedbackManagerExists();
 
+            var prestigePanel = BuildPrestigePanel(canvas, panelSprite, closeButtonSprite, buttonSprite);
             BuildHUD(canvas);
             var upgradePanel = BuildUpgradePanel(canvas, panelSprite, closeButtonSprite, buttonSprite);
             var shopPanel = BuildShopPanel(canvas, panelSprite, closeButtonSprite, buttonSprite);
             var leaderboardPanel = BuildLeaderboardPanel(canvas, panelSprite, closeButtonSprite, buttonSprite);
-            BuildNavBar(canvas, panelSprite, buttonSprite, upgradePanel, shopPanel, leaderboardPanel);
+            BuildNavBar(canvas, panelSprite, buttonSprite, upgradePanel, shopPanel, leaderboardPanel, prestigePanel);
             BuildEventBanner(canvas, bannerSprite);
             BuildWelcomeBackPopup(canvas, panelSprite, buttonSprite);
             BuildDailyRewardPopup(canvas, panelSprite, buttonSprite);
@@ -54,9 +56,9 @@ namespace GoldAndGoblins.EditorTools
             EditorSceneManager.MarkSceneDirty(canvas.gameObject.scene);
             EditorSceneManager.SaveScene(canvas.gameObject.scene);
             AssetDatabase.SaveAssets();
-            Debug.Log("[UILayoutSetup] Built HUD, Upgrade/Shop/Leaderboard panels + row prefabs, nav bar, event " +
+            Debug.Log("[UILayoutSetup] Built HUD, Upgrade/Shop/Leaderboard/Prestige panels + row prefabs, nav bar, event " +
                       "banner, welcome-back/daily-reward popups, and goblin health bar. Upgrade/Shop panels will be " +
-                      "empty until you create UpgradeDataSO / IAPProductSO+ProductCatalogSO assets. The leaderboard " +
+                      "empty until you run 'Create Default Game Data'. The leaderboard " +
                       "will show 'unavailable' until Unity Gaming Services is linked (Edit > Project Settings > " +
                       "Services) and a 'total_gold_earned' leaderboard exists in the Unity Cloud Dashboard.");
         }
@@ -76,6 +78,27 @@ namespace GoldAndGoblins.EditorTools
             }
 
             managersRoot.gameObject.AddComponent<LeaderboardManager>();
+        }
+
+        private static void EnsureFeedbackManagerExists()
+        {
+            if (Object.FindObjectOfType<GoldAndGoblins.Gameplay.FeedbackManager>(true) != null) return;
+
+            var managersRoot = Object.FindObjectOfType<GameManager>(true);
+            if (managersRoot == null)
+            {
+                Debug.LogWarning("[UILayoutSetup] No GameManager found -- can't attach FeedbackManager. Run 'Bootstrap Starter Scene' first.");
+                return;
+            }
+
+            var feedback = managersRoot.gameObject.AddComponent<GoldAndGoblins.Gameplay.FeedbackManager>();
+            var so = new SerializedObject(feedback);
+            var prop = so.FindProperty("worldCamera");
+            if (prop != null)
+            {
+                prop.objectReferenceValue = Camera.main;
+                so.ApplyModifiedPropertiesWithoutUndo();
+            }
         }
 
         private static Sprite LoadSprite(string fileName)
@@ -115,17 +138,24 @@ namespace GoldAndGoblins.EditorTools
             AnchorStretchAll(bg.GetComponent<RectTransform>());
 
             var goldText = CreateText(hud.transform, "GoldText", "Gold: 0", 42, TextAlignmentOptions.MidlineLeft);
-            AnchorLeft(goldText.rectTransform, 40, 320, 100);
+            AnchorLeft(goldText.rectTransform, 40, 280, 100);
 
             var gemsText = CreateText(hud.transform, "GemsText", "Gems: 0", 42, TextAlignmentOptions.MidlineLeft);
-            AnchorLeft(gemsText.rectTransform, 380, 280, 100);
+            AnchorLeft(gemsText.rectTransform, 340, 220, 100);
 
-            var depthText = CreateText(hud.transform, "DepthText", "Depth 1", 42, TextAlignmentOptions.MidlineRight);
-            AnchorRight(depthText.rectTransform, 40, 280, 100);
+            var depthText = CreateText(hud.transform, "DepthText", "Depth 1  •  1x", 32, TextAlignmentOptions.MidlineRight);
+            AnchorRight(depthText.rectTransform, 240, 360, 100);
+
+            var prestigeButton = CreateButton(hud.transform, "PrestigeButton", LoadSprite("button_brown.png"), "Prestige", 26);
+            AnchorRight(prestigeButton.GetComponent<RectTransform>(), 20, 200, 100);
+
+            var prestigePanel = Object.FindObjectOfType<PrestigePanelController>(true);
 
             AssignSerializedField(hud, "goldText", goldText);
             AssignSerializedField(hud, "gemsText", gemsText);
             AssignSerializedField(hud, "depthText", depthText);
+            AssignSerializedField(hud, "prestigeButton", prestigeButton);
+            if (prestigePanel != null) AssignSerializedField(hud, "prestigePanel", prestigePanel);
         }
 
         // ---------- Upgrade panel ----------
@@ -334,7 +364,7 @@ namespace GoldAndGoblins.EditorTools
 
         // ---------- Nav bar ----------
 
-        private static void BuildNavBar(Canvas canvas, Sprite panelSprite, Sprite buttonSprite, GameObject upgradePanel, GameObject shopPanel, GameObject leaderboardPanel)
+        private static void BuildNavBar(Canvas canvas, Sprite panelSprite, Sprite buttonSprite, GameObject upgradePanel, GameObject shopPanel, GameObject leaderboardPanel, PrestigePanelController prestigePanel)
         {
             var existingNav = Object.FindObjectOfType<NavBarController>(true);
             var navGo = existingNav != null ? existingNav.gameObject : CreateUIChild(canvas.transform, "NavBar");
@@ -357,10 +387,48 @@ namespace GoldAndGoblins.EditorTools
             AssignSerializedField(nav, "upgradePanel", upgradePanel);
             AssignSerializedField(nav, "shopPanel", shopPanel);
             AssignSerializedField(nav, "leaderboardPanel", leaderboardPanel);
+            if (prestigePanel != null) AssignSerializedField(nav, "prestigePanel", prestigePanel);
 
             UnityEventTools.AddPersistentListener(upgradesButton.onClick, nav.ShowUpgrades);
             UnityEventTools.AddPersistentListener(shopButton.onClick, nav.ShowShop);
             UnityEventTools.AddPersistentListener(leaderboardButton.onClick, nav.ShowLeaderboard);
+        }
+
+        // ---------- Prestige panel ----------
+
+        private static PrestigePanelController BuildPrestigePanel(Canvas canvas, Sprite panelSprite, Sprite closeSprite, Sprite buttonSprite)
+        {
+            var existing = Object.FindObjectOfType<PrestigePanelController>(true);
+            var panelGo = existing != null ? existing.gameObject : CreateUIChild(canvas.transform, "PrestigePanel");
+            ClearChildren(panelGo.transform);
+            var controller = existing != null ? existing : panelGo.AddComponent<PrestigePanelController>();
+
+            AnchorModal(panelGo.GetComponent<RectTransform>());
+
+            var popupRoot = CreateUIChild(panelGo.transform, "PopupRoot");
+            AnchorStretchAll(popupRoot.GetComponent<RectTransform>());
+
+            var bg = CreateImage("Background", popupRoot.transform, panelSprite, Color.white);
+            AnchorStretchAll(bg.GetComponent<RectTransform>());
+
+            CreateTitle(popupRoot.transform, "Prestige");
+
+            var summaryText = CreateText(popupRoot.transform, "SummaryText", "Earn enough lifetime gold to prestige.", 32, TextAlignmentOptions.Midline);
+            AnchorCenterBox(summaryText.rectTransform, 800, 500, 0, -20);
+
+            var prestigeButton = CreateButton(popupRoot.transform, "PrestigeButton", buttonSprite, "Prestige", 30);
+            AnchorCenterBox(prestigeButton.GetComponent<RectTransform>(), 500, 120, 0, -280);
+
+            var closeButton = CreateButton(popupRoot.transform, "CloseButton", closeSprite, "", 0);
+            AnchorTopRightBox(closeButton.GetComponent<RectTransform>(), 90, 90, -20, -20);
+
+            AssignSerializedField(controller, "popupRoot", popupRoot);
+            AssignSerializedField(controller, "summaryText", summaryText);
+            AssignSerializedField(controller, "prestigeButton", prestigeButton);
+            AssignSerializedField(controller, "closeButton", closeButton);
+
+            popupRoot.SetActive(false);
+            return controller;
         }
 
         // ---------- Event banner ----------

@@ -15,6 +15,8 @@ namespace GoldAndGoblins.UI
         private void OnEnable()
         {
             EventBus.Subscribe<GoldChangedEvent>(OnGoldChanged);
+            EventBus.Subscribe<PrestigeEvent>(OnPrestige);
+            EventBus.Subscribe<UpgradePurchasedEvent>(OnUpgradePurchased);
         }
 
         // Start, not OnEnable: UpgradeSystem.Instance is only guaranteed to exist
@@ -24,6 +26,8 @@ namespace GoldAndGoblins.UI
         private void OnDisable()
         {
             EventBus.Unsubscribe<GoldChangedEvent>(OnGoldChanged);
+            EventBus.Unsubscribe<PrestigeEvent>(OnPrestige);
+            EventBus.Unsubscribe<UpgradePurchasedEvent>(OnUpgradePurchased);
         }
 
         private void BuildRows()
@@ -47,6 +51,12 @@ namespace GoldAndGoblins.UI
         }
 
         private void OnGoldChanged(GoldChangedEvent evt)
+        {
+            foreach (var row in spawnedRows) row.Refresh();
+        }
+
+        private void OnPrestige(PrestigeEvent evt) => BuildRows();
+        private void OnUpgradePurchased(UpgradePurchasedEvent evt)
         {
             foreach (var row in spawnedRows) row.Refresh();
         }

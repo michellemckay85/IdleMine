@@ -38,6 +38,26 @@ namespace GoldAndGoblins.Gameplay
             return upgrade == null ? 0 : upgrade.ValueForLevel(GetLevel(upgrade.upgradeId));
         }
 
+        // 0 = no cooldown (unlimited manual taps). Otherwise 1 / taps-per-second.
+        public float TapCooldownSeconds
+        {
+            get
+            {
+                var tapsPerSecond = GetCurrentValue(UpgradeType.DrillSpeed);
+                return tapsPerSecond <= 0 ? 0f : 1f / (float)tapsPerSecond;
+            }
+        }
+
+        // int.MaxValue = uncapped. Otherwise the deepest floor the player may reach.
+        public int MaxUnlockedDepth
+        {
+            get
+            {
+                var value = GetCurrentValue(UpgradeType.MaxDepthUnlock);
+                return value <= 0 ? int.MaxValue : Mathf.Max(1, (int)System.Math.Floor(value));
+            }
+        }
+
         public double GetNextCost(string upgradeId)
         {
             if (!upgradesById.TryGetValue(upgradeId, out var upgrade)) return double.MaxValue;
@@ -73,6 +93,7 @@ namespace GoldAndGoblins.Gameplay
 
         private void RecalculateDerivedStats()
         {
+            if (CurrencyManager.Instance == null) return;
             CurrencyManager.Instance.UpgradeGoldMultiplier = System.Math.Max(1.0, GetCurrentValue(UpgradeType.GoldMultiplier));
         }
 

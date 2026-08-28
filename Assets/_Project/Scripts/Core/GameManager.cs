@@ -22,10 +22,11 @@ namespace GoldAndGoblins.Core
 
             // SaveManager, CurrencyManager, IAPManager, AdsManager and AnalyticsManager
             // are independent singletons and initialize themselves in their own Awake.
+            PrestigeManager.Instance?.ApplyMultiplierToEconomy();
             upgradeSystem?.Initialize();
-            mineGrid?.Initialize();
-            idleEarningsManager?.ApplyOfflineEarnings();
             eventManager?.RefreshActiveEvents();
+            idleEarningsManager?.ApplyOfflineEarnings();
+            mineGrid?.Initialize();
             dailyRewardManager?.CheckAndOfferDailyReward();
 
             AnalyticsManager.Instance?.LogEvent("session_start");

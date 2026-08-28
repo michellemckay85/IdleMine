@@ -10,6 +10,7 @@ namespace GoldAndGoblins.Gameplay
         [SerializeField] private LayerMask blockLayerMask = ~0;
 
         private float autoMineAccumulator;
+        private float tapCooldownRemaining;
 
         private void Reset()
         {
@@ -24,6 +25,11 @@ namespace GoldAndGoblins.Gameplay
 
         private void HandleTapInput()
         {
+            if (tapCooldownRemaining > 0f)
+            {
+                tapCooldownRemaining -= Time.deltaTime;
+            }
+
             var tapped = false;
             Vector3 screenPos = default;
 
@@ -39,6 +45,7 @@ namespace GoldAndGoblins.Gameplay
             }
 
             if (!tapped || worldCamera == null) return;
+            if (tapCooldownRemaining > 0f) return;
 
             var ray = worldCamera.ScreenPointToRay(screenPos);
             if (Physics.Raycast(ray, out var hit, 100f, blockLayerMask))
@@ -50,6 +57,7 @@ namespace GoldAndGoblins.Gameplay
                     var isCrit = Random.value < UpgradeSystem.Instance.GetCurrentValue(UpgradeType.CriticalChance);
                     var damage = isCrit ? drillPower * 3f : drillPower;
                     MineGrid.Instance.TapBlock(block.Row, block.Col, damage);
+                    tapCooldownRemaining = UpgradeSystem.Instance.TapCooldownSeconds;
                 }
             }
         }

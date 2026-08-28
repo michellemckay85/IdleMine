@@ -70,6 +70,13 @@ namespace GoldAndGoblins.Core
         public DepthAdvancedEvent(int newDepth) { NewDepth = newDepth; }
     }
 
+    public readonly struct DepthCappedEvent
+    {
+        public readonly int CurrentDepth;
+        public readonly int MaxDepth;
+        public DepthCappedEvent(int currentDepth, int maxDepth) { CurrentDepth = currentDepth; MaxDepth = maxDepth; }
+    }
+
     public readonly struct UpgradePurchasedEvent
     {
         public readonly string UpgradeId;

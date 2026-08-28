@@ -16,6 +16,7 @@ namespace GoldAndGoblins.LiveOps
         [SerializeField] private List<TimedEventDataSO> scheduledEvents = new List<TimedEventDataSO>();
 
         private readonly HashSet<string> activeEventIds = new HashSet<string>();
+        private readonly HashSet<string> forcedEventIds = new HashSet<string>();
 
         public IReadOnlyCollection<string> ActiveEventIds => activeEventIds;
 
@@ -46,40 +47,46 @@ namespace GoldAndGoblins.LiveOps
                 }
             }
 
-            CurrencyManager.Instance.EventGoldMultiplier = combinedMultiplier;
+            if (CurrencyManager.Instance != null)
+            {
+                CurrencyManager.Instance.EventGoldMultiplier = combinedMultiplier;
+            }
         }
 
         public void ForceStart(string eventId)
         {
-            if (activeEventIds.Add(eventId))
-            {
-                EventBus.Publish(new LiveEventStartedEvent(eventId));
-                RefreshActiveEvents();
-            }
+            forcedEventIds.Add(eventId);
+            RefreshActiveEvents();
         }
 
         public void ForceEnd(string eventId)
         {
-            if (activeEventIds.Remove(eventId))
-            {
-                EventBus.Publish(new LiveEventEndedEvent(eventId));
-                RefreshActiveEvents();
-            }
+            forcedEventIds.Remove(eventId);
+            RefreshActiveEvents();
         }
 
         public TimedEventDataSO GetEventData(string eventId) => scheduledEvents.FirstOrDefault(e => e.eventId == eventId);
 
-        private static bool IsWithinWindow(TimedEventDataSO evt, DateTime now)
+        private bool IsWithinWindow(TimedEventDataSO evt, DateTime now)
         {
-            if (string.IsNullOrEmpty(evt.startUtcIso8601) || string.IsNullOrEmpty(evt.endUtcIso8601))
+            if (forcedEventIds.Contains(evt.eventId)) return true;
+
+            switch (evt.scheduleKind)
             {
-                return false; // manually controlled via ForceStart/ForceEnd
+                case EventScheduleKind.AlwaysOn:
+                    return true;
+                case EventScheduleKind.EveryWeekendUtc:
+                    return now.DayOfWeek == DayOfWeek.Saturday || now.DayOfWeek == DayOfWeek.Sunday;
+                default:
+                    if (string.IsNullOrEmpty(evt.startUtcIso8601) || string.IsNullOrEmpty(evt.endUtcIso8601))
+                    {
+                        return false; // manually controlled via ForceStart/ForceEnd
+                    }
+
+                    var hasStart = DateTime.TryParse(evt.startUtcIso8601, CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal, out var start);
+                    var hasEnd = DateTime.TryParse(evt.endUtcIso8601, CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal, out var end);
+                    return hasStart && hasEnd && now >= start && now <= end;
             }
-
-            var hasStart = DateTime.TryParse(evt.startUtcIso8601, CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal, out var start);
-            var hasEnd = DateTime.TryParse(evt.endUtcIso8601, CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal, out var end);
-
-            return hasStart && hasEnd && now >= start && now <= end;
         }
     }
 }

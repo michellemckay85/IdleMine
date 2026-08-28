@@ -19,18 +19,31 @@ namespace GoldAndGoblins.Gameplay
 
         private Block[,] grid;
         private int keysCollectedThisDepth;
+        private bool eventsBound;
 
         public int CurrentDepth => SaveManager.Instance.Current.currentDepth;
 
+        public int MaxUnlockedDepth => UpgradeSystem.Instance != null
+            ? UpgradeSystem.Instance.MaxUnlockedDepth
+            : int.MaxValue;
+
         public void Initialize()
         {
-            EventBus.Subscribe<BlockBrokenEvent>(OnBlockBroken);
+            if (!eventsBound)
+            {
+                EventBus.Subscribe<BlockBrokenEvent>(OnBlockBroken);
+                eventsBound = true;
+            }
+
             BuildGridForCurrentDepth();
         }
+
+        public void RebuildGrid() => BuildGridForCurrentDepth();
 
         private void OnDestroy()
         {
             EventBus.Unsubscribe<BlockBrokenEvent>(OnBlockBroken);
+            eventsBound = false;
         }
 
         private void BuildGridForCurrentDepth()
@@ -161,6 +174,14 @@ namespace GoldAndGoblins.Gameplay
 
         private void AdvanceDepth()
         {
+            var maxDepth = MaxUnlockedDepth;
+            if (maxDepth != int.MaxValue && CurrentDepth >= maxDepth)
+            {
+                EventBus.Publish(new DepthCappedEvent(CurrentDepth, maxDepth));
+                BuildGridForCurrentDepth();
+                return;
+            }
+
             SaveManager.Instance.Current.currentDepth++;
             EventBus.Publish(new DepthAdvancedEvent(CurrentDepth));
             BuildGridForCurrentDepth();

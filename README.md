@@ -8,11 +8,11 @@ live events. Built in Unity 2022.3 LTS (URP) for iOS + Android.
 
 ## Status
 
-This is a scaffolded, playable-in-editor foundation, not a finished, art-complete
-game. Every core system below is implemented in code and wired together by the
-editor bootstrap tool; what's still needed before this is store-ready is art,
-shader materials, real store/ad accounts, and a testing pass — all called out
-under [What you still need to do](#what-you-still-need-to-do).
+This is a scaffolded, playable-in-editor foundation, not a finished, store-ready
+game. Core systems are implemented and wired by the editor bootstrap tools; KayKit
+art, UI sprites, and the GritLine toon shader are in the repo. What's still needed
+before this is store-ready is polish, real store/ad accounts, and a testing pass —
+all called out under [What you still need to do](#what-you-still-need-to-do).
 
 ## Getting started
 
@@ -21,12 +21,16 @@ under [What you still need to do](#what-you-still-need-to-do).
    install it or you can point it at whatever 2022.3.x you have).
 2. Let Unity resolve packages (`Packages/manifest.json` pulls in Unity IAP,
    Unity Ads, URP, TextMeshPro, Newtonsoft Json, Mobile Notifications).
-3. Menu: **Gold And Goblins → Bootstrap Starter Scene**. This builds
-   `Assets/_Project/Scenes/Main.unity` with every manager wired up and a
-   placeholder UI hierarchy, so you have something to press Play on immediately.
-4. Press Play. You'll see log output (mine grid won't render without art —
-   see below) but the underlying loop (currency, upgrades, save/load, offline
-   earnings) is running.
+3. Menu, in this order:
+   **Gold And Goblins → Bootstrap Starter Scene**
+   **→ Wire Up Imported Art**
+   **→ Wire Up Scene**
+   **→ Wire Up GritLine Materials**
+   **→ Build UI Layout**
+   **→ Create Default Game Data**
+   This builds `Assets/_Project/Scenes/Main.unity` with managers, art, UI, upgrades,
+   IAP products, and live events wired up.
+4. Press Play. Tap blocks, buy upgrades, hit the depth cap, prestige from the HUD.
 
 ## Architecture
 
@@ -38,17 +42,20 @@ Assets/_Project/Scripts/
   Economy/    CurrencyManager (gold/gems), UpgradeSystem + UpgradeDataSO
               (ScriptableObject-driven cost/value curves), IAPManager (Unity IAP),
               ProductCatalogSO / IAPProductSO, IReceiptValidator
-  Gameplay/   MineGrid, Block, BlockDataSO, DrillInputController (tap + auto-mine),
-              IdleEarningsManager (offline progress), PrestigeManager (reset loop)
+  Gameplay/   MineGrid, Block, BlockDataSO, DrillInputController (tap + auto-mine +
+              tap cooldown from DrillSpeed), IdleEarningsManager (offline progress),
+              PrestigeManager (reset loop; multiplier applies to ALL gold),
+              FeedbackManager (camera shake on breaks)
   Goblins/    GoblinDataSO, GoblinCombatManager (tap-to-fight mini combat + loot)
-  LiveOps/    EventManager (timed events with gold multipliers), TimedEventDataSO,
-              DailyRewardManager (login streak rewards)
+  LiveOps/    EventManager (AlwaysOn / every-weekend-UTC / one-shot windows),
+              TimedEventDataSO, DailyRewardManager (login streak rewards)
   Ads/        IAdsProvider abstraction, MockAdsProvider (no SDK needed for
               testing), UnityAdsProvider (real com.unity.ads implementation),
               AdsManager facade
   Analytics/  IAnalyticsProvider abstraction, DebugLogAnalyticsProvider stub
-  UI/         HUD, upgrade panel/rows, shop panel/rows, event banner, welcome-back
-              popup, daily-reward popup, goblin health bar — all driven by EventBus
+  UI/         HUD (gold/gems/depth/prestige), upgrade panel/rows, shop panel/rows,
+              prestige panel, event banner, welcome-back popup, daily-reward popup,
+              goblin health bar, leaderboard — all driven by EventBus
 Assets/_Project/Editor/
   ProjectBootstrapper.cs   "Gold And Goblins → Bootstrap Starter Scene" menu command
 Assets/_Project/ScriptableObjects/
@@ -60,24 +67,14 @@ Everything talks through `EventBus` (see `Core/EventBus.cs` for the full event
 list) rather than direct references between gameplay and UI, so you can reskin
 the UI or swap in new gameplay screens without touching manager code.
 
-## Plugging in your art and the GritLine Toon Shader
+## Art and the GritLine Toon Shader
 
-I don't have access to your local art assets or the GritLine package from this
-session — only what's in this git repo. Two ways to get them in:
-
-- **Locally (recommended):** open the project in Unity, import your art package
-  and the GritLine Toon Shader package, drop assets under
-  `Assets/_Project/Art/` and `Assets/_Project/Shaders/` (see the README in each
-  folder), build block/goblin prefabs with GritLine materials applied, then
-  assign those prefabs to the `visualPrefab` field on your `BlockDataSO` /
-  `GoblinDataSO` assets. Commit and push — I can pick up from there.
-- **Send me the files:** if you want me to wire the prefabs/materials up in this
-  session, share the asset files and I'll do the Inspector-equivalent wiring
-  via the ScriptableObject/prefab files directly.
-
-The project defaults to **URP**. If GritLine Toon Shader targets Built-in RP
-only, say so and I'll switch the render pipeline package to match — nothing in
-the gameplay code is render-pipeline-specific.
+KayKit meshes, UI sprites, VFX textures, and the GritLine toon shader already live
+under `Assets/_Project/Art/` and `Assets/_Project/Shaders/GritlineToonShader/`.
+Editor menu commands wire visual prefabs onto block/goblin data and apply GritLine
+materials. Remaining art gap: `character_skeleton_warrior.fbx` has no texture in
+the repo, so the goblin material is an untextured tint until you drop the atlas
+into `Art/Goblins` and re-run **Wire Up GritLine Materials**.
 
 ## Monetization implemented
 
@@ -142,10 +139,14 @@ third-party chat SDK for messaging).
 
 This is the honest gap list between "scaffolded" and "on the App Store":
 
-- **Art & shader integration** (see above) — nothing renders without it.
-- **Scene/prefab polish in-editor** — the bootstrapper gives you a working
-  hierarchy, but real UI layout, animations, and juice (screen shake, particle
-  bursts, SFX) need to be built by hand in Unity.
+- **Art & shader integration** — KayKit meshes, UI sprites, and GritLine materials
+  are imported and wired by the editor tools. Remaining gap: the skeleton goblin
+  has no texture atlas in the repo (flat tint until one is dropped in
+  `Art/Goblins` and **Wire Up GritLine Materials** is re-run). Particle bursts
+  and SFX are still missing; camera shake is in.
+- **Scene/prefab polish in-editor** — run the menu commands above on `Main.unity`
+  so the existing scene picks up prestige UI, default upgrades, and live events.
+  Animations and more juice still need a pass in the Editor.
 - **Store accounts & product setup**: create the app in App Store Connect and
   Google Play Console, create matching IAP product IDs, set up a shared/reused
   Unity Ads (or other network) account and ad unit IDs.
@@ -167,6 +168,5 @@ This is the honest gap list between "scaffolded" and "on the App Store":
   Xcode automatic signing) via Apple Developer Program membership; Android
   keystore + Play App Signing enrollment.
 
-I can help with any of these next — happy to build out full block/goblin
-prefabs once art is available, write more live-event content, add more UI
-polish, or draft the store listing copy.
+I can help with any of these next — juice (particles/SFX), more goblin types,
+store listing copy, or wiring a real analytics/receipt-validation provider.

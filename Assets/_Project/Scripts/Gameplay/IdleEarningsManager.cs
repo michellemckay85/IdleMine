@@ -44,11 +44,9 @@ namespace GoldAndGoblins.Gameplay
 
         private double CurrentIdleRatePerSecond()
         {
-            var multiplier = UpgradeSystem.Instance != null
-                ? Math.Max(1.0, UpgradeSystem.Instance.GetCurrentValue(UpgradeType.GoldMultiplier))
-                : 1.0;
-            var prestigeMultiplier = PrestigeManager.Instance != null ? PrestigeManager.Instance.CurrentPrestigeMultiplier : 1.0;
-            return baseIdleGoldPerSecond * multiplier * prestigeMultiplier;
+            // Prestige / upgrade / event multipliers are applied inside CurrencyManager.AddGold,
+            // so the idle rate itself is the unmultiplied gold-per-second.
+            return baseIdleGoldPerSecond;
         }
     }
 }

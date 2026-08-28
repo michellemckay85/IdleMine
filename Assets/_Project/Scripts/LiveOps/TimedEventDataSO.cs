@@ -10,6 +10,13 @@ namespace GoldAndGoblins.LiveOps
         LimitedShopOffer
     }
 
+    public enum EventScheduleKind
+    {
+        OneShotWindow,
+        EveryWeekendUtc,
+        AlwaysOn
+    }
+
     [CreateAssetMenu(fileName = "Event_", menuName = "Gold And Goblins/Live Event")]
     public class TimedEventDataSO : ScriptableObject
     {
@@ -17,8 +24,9 @@ namespace GoldAndGoblins.LiveOps
         public string displayName;
         [TextArea] public string description;
         public LiveEventType eventType;
+        public EventScheduleKind scheduleKind = EventScheduleKind.OneShotWindow;
 
-        [Tooltip("UTC. Leave both blank to schedule manually via EventManager.ForceStart/End.")]
+        [Tooltip("UTC. Used when scheduleKind is OneShotWindow. Leave both blank to schedule manually via EventManager.ForceStart/End.")]
         public string startUtcIso8601;
         public string endUtcIso8601;
 

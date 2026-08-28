@@ -9,7 +9,8 @@ namespace GoldAndGoblins.Economy
 
         public double UpgradeGoldMultiplier { get; set; } = 1.0;
         public double EventGoldMultiplier { get; set; } = 1.0;
-        public double ActiveGoldMultiplier => UpgradeGoldMultiplier * EventGoldMultiplier;
+        public double PrestigeGoldMultiplier { get; set; } = 1.0;
+        public double ActiveGoldMultiplier => UpgradeGoldMultiplier * EventGoldMultiplier * PrestigeGoldMultiplier;
 
         public void AddGold(double amount)
         {
