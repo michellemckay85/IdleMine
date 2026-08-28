@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e3c15d7f5a7a148d0943b72026be1009, type: 3}
+  m_Name: Product_gems_small
+  m_EditorClassIdentifier: 
+  productId: gems_small
+  productType: 0
+  displayName: Handful of Gems
+  description: 50 gems
+  rewardKind: 0
+  gemAmount: 50
+  goldAmount: 0
+  bonusGems: 0

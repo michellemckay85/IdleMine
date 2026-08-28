@@ -39,6 +39,7 @@ namespace GoldAndGoblins.Gameplay
             }
 
             if (!tapped || worldCamera == null) return;
+            if (UpgradeSystem.Instance == null || MineGrid.Instance == null) return;
 
             var ray = worldCamera.ScreenPointToRay(screenPos);
             if (Physics.Raycast(ray, out var hit, 100f, blockLayerMask))
@@ -56,6 +57,10 @@ namespace GoldAndGoblins.Gameplay
 
         private void HandleAutoMining()
         {
+            // Managers may not be ready on the first frames (or after a domain-reload quirk).
+            // Never spam NullReferenceException from a missing singleton.
+            if (UpgradeSystem.Instance == null || MineGrid.Instance == null) return;
+
             var autoSpeed = UpgradeSystem.Instance.GetCurrentValue(UpgradeType.AutoMinerSpeed);
             if (autoSpeed <= 0) return;
 
@@ -64,6 +69,7 @@ namespace GoldAndGoblins.Gameplay
             autoMineAccumulator = 0f;
 
             var drillPower = (float)UpgradeSystem.Instance.GetCurrentValue(UpgradeType.DrillPower);
+            if (drillPower <= 0) drillPower = 1f;
             MineGrid.Instance.TapNextAvailableBlock(drillPower);
         }
     }

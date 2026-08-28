@@ -4,11 +4,26 @@ namespace GoldAndGoblins.Utils
 {
     public abstract class Singleton<T> : MonoBehaviour where T : Singleton<T>
     {
-        public static T Instance { get; private set; }
+        private static T instance;
+
+        public static T Instance
+        {
+            get
+            {
+                // Unity fake-null: a destroyed object compares equal to null.
+                // Lazy FindObjectOfType recovers from domain-reload / Awake-order quirks.
+                if (instance == null)
+                {
+                    instance = FindObjectOfType<T>();
+                }
+                return instance;
+            }
+            private set => instance = value;
+        }
 
         protected virtual void Awake()
         {
-            if (Instance != null && Instance != this)
+            if (instance != null && instance != this)
             {
                 Destroy(gameObject);
                 return;
@@ -23,9 +38,9 @@ namespace GoldAndGoblins.Utils
 
         protected virtual void OnDestroy()
         {
-            if (Instance == this)
+            if (instance == this)
             {
-                Instance = null;
+                instance = null;
             }
         }
     }
