@@ -1,0 +1,6 @@
+{
+  "name": "Gold and Goblins (Unity 2022.3.50f1)",
+  "user": "ubuntu",
+  "install": "bash .cursor/install.sh",
+  "start": "bash .cursor/start.sh"
+}
