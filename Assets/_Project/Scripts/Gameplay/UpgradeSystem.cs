@@ -16,15 +16,22 @@ namespace GoldAndGoblins.Gameplay
         public void Initialize()
         {
             upgradesById.Clear();
-            foreach (var upgrade in upgrades)
+            if (upgrades != null)
             {
-                upgradesById[upgrade.upgradeId] = upgrade;
+                foreach (var upgrade in upgrades)
+                {
+                    if (upgrade == null || string.IsNullOrEmpty(upgrade.upgradeId)) continue;
+                    upgradesById[upgrade.upgradeId] = upgrade;
+                }
             }
 
             levels.Clear();
-            foreach (var entry in SaveManager.Instance.Current.upgradeLevels)
+            if (SaveManager.Instance != null)
             {
-                levels[entry.upgradeId] = entry.level;
+                foreach (var entry in SaveManager.Instance.Current.upgradeLevels)
+                {
+                    levels[entry.upgradeId] = entry.level;
+                }
             }
 
             RecalculateDerivedStats();
@@ -34,7 +41,19 @@ namespace GoldAndGoblins.Gameplay
 
         public double GetCurrentValue(UpgradeType type)
         {
-            var upgrade = upgrades.FirstOrDefault(u => u.upgradeType == type);
+            if (upgrades == null || upgrades.Count == 0) return 0;
+
+            UpgradeDataSO upgrade = null;
+            for (var i = 0; i < upgrades.Count; i++)
+            {
+                var candidate = upgrades[i];
+                if (candidate != null && candidate.upgradeType == type)
+                {
+                    upgrade = candidate;
+                    break;
+                }
+            }
+
             return upgrade == null ? 0 : upgrade.ValueForLevel(GetLevel(upgrade.upgradeId));
         }
 
@@ -73,6 +92,7 @@ namespace GoldAndGoblins.Gameplay
 
         private void RecalculateDerivedStats()
         {
+            if (CurrencyManager.Instance == null) return;
             CurrencyManager.Instance.UpgradeGoldMultiplier = System.Math.Max(1.0, GetCurrentValue(UpgradeType.GoldMultiplier));
         }
 
