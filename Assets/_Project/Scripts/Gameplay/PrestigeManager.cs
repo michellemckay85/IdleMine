@@ -1,6 +1,7 @@
 using System;
 using UnityEngine;
 using GoldAndGoblins.Core;
+using GoldAndGoblins.Economy;
 
 namespace GoldAndGoblins.Gameplay
 {
@@ -38,6 +39,8 @@ namespace GoldAndGoblins.Gameplay
 
             upgradeSystem.Initialize();
             mineGrid.Initialize();
+
+            CurrencyManager.Instance?.RefreshPersistentMultipliers(CurrentPrestigeMultiplier, data.vipActive);
 
             EventBus.Publish(new PrestigeEvent(data.prestigeLevel, CurrentPrestigeMultiplier));
         }

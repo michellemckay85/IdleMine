@@ -42,13 +42,8 @@ namespace GoldAndGoblins.Gameplay
             pendingOfflineSeconds = 0;
         }
 
-        private double CurrentIdleRatePerSecond()
-        {
-            var multiplier = UpgradeSystem.Instance != null
-                ? Math.Max(1.0, UpgradeSystem.Instance.GetCurrentValue(UpgradeType.GoldMultiplier))
-                : 1.0;
-            var prestigeMultiplier = PrestigeManager.Instance != null ? PrestigeManager.Instance.CurrentPrestigeMultiplier : 1.0;
-            return baseIdleGoldPerSecond * multiplier * prestigeMultiplier;
-        }
+        // Base idle rate only. Upgrade / prestige / VIP / event multipliers are applied
+        // once inside CurrencyManager.AddGold — do not multiply them here or gold is doubled.
+        private double CurrentIdleRatePerSecond() => baseIdleGoldPerSecond;
     }
 }

@@ -142,7 +142,12 @@ namespace GoldAndGoblins.Economy
                     data.removeAdsPurchased = true;
                     break;
                 case RewardKind.VipPass:
+                    // VIP = permanent 2x gold + no interstitial ads.
                     data.vipActive = true;
+                    data.removeAdsPurchased = true;
+                    CurrencyManager.Instance.RefreshPersistentMultipliers(
+                        CurrencyManager.Instance.PrestigeGoldMultiplier,
+                        vipActive: true);
                     break;
                 case RewardKind.StarterBundle:
                     CurrencyManager.Instance.AddGems(product.gemAmount + product.bonusGems);
