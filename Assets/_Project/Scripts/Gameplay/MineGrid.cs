@@ -19,18 +19,35 @@ namespace GoldAndGoblins.Gameplay
 
         private Block[,] grid;
         private int keysCollectedThisDepth;
+        private bool initialized;
 
         public int CurrentDepth => SaveManager.Instance.Current.currentDepth;
 
         public void Initialize()
         {
+            if (initialized) return;
+            initialized = true;
+
+            Debug.Log("[MineGrid] Initialize starting...");
             EventBus.Subscribe<BlockBrokenEvent>(OnBlockBroken);
             BuildGridForCurrentDepth();
+        }
+
+        // Safety net: if GameManager failed to call Initialize (missing reference),
+        // still build the mine so Play mode isn't an empty brown screen.
+        private void Start()
+        {
+            if (!initialized)
+            {
+                Debug.LogWarning("[MineGrid] GameManager did not initialize the mine — self-starting.");
+                Initialize();
+            }
         }
 
         private void OnDestroy()
         {
             EventBus.Unsubscribe<BlockBrokenEvent>(OnBlockBroken);
+            initialized = false;
         }
 
         private void BuildGridForCurrentDepth()
