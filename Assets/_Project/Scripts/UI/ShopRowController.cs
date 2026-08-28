@@ -19,7 +19,7 @@ namespace GoldAndGoblins.UI
 
             if (priceText != null)
             {
-                var localizedPrice = IAPManager.Instance.GetLocalizedPriceString(product.productId);
+                var localizedPrice = IAPManager.Instance != null ? IAPManager.Instance.GetLocalizedPriceString(product.productId) : "";
                 priceText.text = string.IsNullOrEmpty(localizedPrice) ? "..." : localizedPrice;
             }
 

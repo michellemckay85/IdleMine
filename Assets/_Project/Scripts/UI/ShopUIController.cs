@@ -15,9 +15,12 @@ namespace GoldAndGoblins.UI
 
         private void OnEnable()
         {
-            BuildRows();
             EventBus.Subscribe<PurchaseCompletedEvent>(OnPurchaseCompleted);
         }
+
+        // Start, not OnEnable: rows bind against IAPManager.Instance, which is only
+        // guaranteed to exist by the time every object's Start has run.
+        private void Start() => BuildRows();
 
         private void OnDisable()
         {
