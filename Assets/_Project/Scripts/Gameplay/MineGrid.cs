@@ -49,11 +49,18 @@ namespace GoldAndGoblins.Gameplay
                 Destroy(child.gameObject);
             }
 
+            var spawned = 0;
             for (var r = 0; r < rows; r++)
             {
                 for (var c = 0; c < cols; c++)
                 {
                     var data = PickBlockDataFor(r, c);
+                    if (data == null)
+                    {
+                        Debug.LogWarning($"[MineGrid] No BlockDataSO for cell ({r},{c}) -- is blockPalette empty?");
+                        continue;
+                    }
+
                     var instance = Instantiate(blockPrefab, gridRoot);
                     // Center the shaft on (0,0) so a portrait camera aimed at the origin frames it.
                     var x = (c - (cols - 1) * 0.5f) * cellSpacing;
@@ -62,8 +69,11 @@ namespace GoldAndGoblins.Gameplay
                     instance.Setup(data, r, c, CurrentDepth);
                     instance.IsLocked = data.kind == BlockKind.ChestBlock;
                     grid[r, c] = instance;
+                    spawned++;
                 }
             }
+
+            Debug.Log($"[MineGrid] Built {spawned} blocks at depth {CurrentDepth}.");
         }
 
         private BlockDataSO PickBlockDataFor(int row, int col)
