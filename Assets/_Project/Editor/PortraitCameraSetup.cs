@@ -129,7 +129,7 @@ namespace GoldAndGoblins.EditorTools
 
         private static void FrameMineGridIfPresent()
         {
-            var grid = Object.FindObjectOfType<MineGrid>(true);
+            var grid = UnityEngine.Object.FindObjectOfType<MineGrid>(true);
             if (grid == null) return;
             // Nudge the grid object to world origin under the camera framing.
             grid.transform.localPosition = Vector3.zero;
